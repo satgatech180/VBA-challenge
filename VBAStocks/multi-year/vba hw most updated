@@ -1,0 +1,134 @@
+
+Sub VBA_Stock()
+
+'Define Variables
+
+        Dim Ticker_Symbol As String
+        Dim OpeningStockValue As Double
+        Dim ClosingStockValue As Double
+        Dim Yearly_Change As Variant
+        Dim Percent_Change As Double
+        Dim Stock_Vol As Variant
+        Dim StartRow As Long
+        Dim NewSummaryRow As Integer
+        Dim LastRow As Long
+        Dim ws As Worksheet
+                        
+        Dim strTickHeader As String
+        Dim strYearlyHeader As String
+        Dim strPercentHeader As String
+        Dim strStockVolHeader As String    
+
+
+'Assign starting variable values
+
+        Ticker_Symbol = ""
+        OpeningStockValue = 0
+        ClosingStockValue = 0
+        Yearly_Change = 0
+        Percent_Change = 0
+        Stock_Vol = 0
+        StartRow = 2
+        NewSummaryRow = 2
+        LastRow = 0
+
+    
+'----------------------------------
+'LOOP THROUGH ALL WORKSHEETS
+'----------------------------------
+    For Each ws In ThisWorkbook.Worksheets
+    
+'Activate ws
+    ws.Select
+    ws.Activate
+    
+'Define rows in sheet
+    LastRow = Cells(Rows.Count, 1).End(xlUp).Row
+
+'Define headers for New Summary Table
+
+        strTickerHeader = "Ticker"
+        strYearlyHeader = "Yearly Change"
+        strPercentHeader = "Percent Change"
+        strStockVolHeader = "Total Stock Volume"
+        
+        Range("I1").Value = strTickerHeader
+        Range("J1").Value = strYearlyHeader
+        Range("K1").Value = strPercentHeader
+        Range("L1").Value = strStockVolHeader
+           
+'Loop rows in current ws
+    For StartRow = 2 To LastRow
+
+'Set the Ticker Name
+        Ticker_Symbol = ws.Cells(StartRow, 1)
+        
+'Retrieve first ticker start price
+        If StartRow = 2 Then
+            OpeningStockValue = ws.Cells(StartRow, 3)
+        End If
+        
+'Evaluate if next row is the same ticker symbol as current
+        If Ticker_Symbol = ws.Cells(StartRow + 1, 1) Then
+'Get value for current row & add to Stock_Vol
+            Stock_Vol = ws.Cells(StartRow, 7) + Stock_Vol
+            
+'Indicates next ticker not related to current ticker, grab last closing value, the next ticker
+'Opening value, write the values, clear variables, assign new ticker symbol, increase current summary row
+        Else
+            ClosingStockValue = ws.Cells(StartRow, 6)
+            Stock_Vol = ws.Cells(StartRow, 7) + Stock_Vol
+            
+'Calculate year change
+
+            Yearly_Change = ClosingStockValue - OpeningStockValue
+            
+'Calculate Percent Change
+        If OpeningStockValue <> 0 And Yearly_Change <> 0 Then
+            Percent_Change = (Yearly_Change / OpeningStockValue) * 100
+        Else
+            Percent_Change = 0
+        End If
+      
+'Set cell values
+'Ticker
+        ws.Cells(NewSummaryRow, 9).Value = Ticker_Symbol
+        
+'Yearly_Change
+        ws.Cells(NewSummaryRow, 10).Value = Yearly_Change
+        If Yearly_Change > 0 Then
+            ws.Cells(NewSummaryRow, 10).Interior.Color = RGB(0, 255, 0)
+        Else
+            ws.Cells(NewSummaryRow, 10).Interior.Color = RGB(255, 0, 0)
+        End If
+
+'Perecntage_Change
+        ws.Cells(NewSummaryRow, 11).Value = Str(Round(Percent_Change, 2)) + "%"
+        
+'Stock_Vol
+        ws.Cells(NewSummaryRow, 12).Value = Stock_Vol
+        
+
+'Clear Variables
+
+        Yearly_Change = 0
+        Percent_Change = 0
+        Stock_Vol = 0
+        
+'Set new Ticker
+        Ticker_Symbol = ws.Cells(StartRow + 1, 1)
+        
+'Set New Summary Row
+        NewSummaryRow = NewSummaryRow + 1
+        
+'New ticker starting value
+        OpeningStockValue = ws.Cells(StartRow + 1, 3)
+    
+         End If
+        Next StartRow
+
+        NewSummaryRow = 2
+
+    Next ws
+
+End Sub
